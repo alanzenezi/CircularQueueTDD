@@ -1,10 +1,10 @@
-using CircularQueue;
+using CircularBuffer;
 
 namespace TestSuite
 {
     public class TestSuite
     {
-        private CircularQueue<int?> circleQueue = new CircularQueue<int?>(5);
+        private CircularQueue circleQueue = new CircularQueue(5);
 
         [Fact]
         public void AddNewValue()
@@ -16,26 +16,13 @@ namespace TestSuite
         }
 
         [Fact]
-        public void RemoveValueShouldDeleteOldestItem()
-        {
-            circleQueue.Insert(8);
-            circleQueue.Insert(2);
-
-            int? firstItem = circleQueue.Queue()[0];
-            circleQueue.Remove();
-            Assert.DoesNotContain(firstItem, circleQueue.Queue());
-
-            circleQueue.Remove();
-            Assert.Empty(circleQueue.Queue());
-        }
-
-        [Fact]
         public void AddTwoRemoveOneShouldRemainOne()
         {
             circleQueue.Insert(1);
             circleQueue.Insert(2);
             circleQueue.Remove();
 
+            Assert.NotEmpty(circleQueue.Queue());
             Assert.Equal(2, circleQueue.Queue()[0]);
             Assert.Single(circleQueue.Queue());
         }
@@ -49,17 +36,17 @@ namespace TestSuite
         [Fact]
         public void AddInFullListShouldReplaceOldestItem()
         {
-            var tempQueue = new CircularQueue<int>(3);
-            for (int i = 0; i < tempQueue.Length(); i++)
+            var tempQueue = new CircularBuffer.CircularQueue(3);
+            for (int i = 0; i < 3; i++)
             {
                 tempQueue.Insert(i + 5);
             }
 
             tempQueue.Insert(4);
 
-            Assert.Equal(4, tempQueue.Queue()[0]);
-            Assert.Equal(6, tempQueue.Queue()[1]);
-            Assert.Equal(7, tempQueue.Queue()[2]);
+            Assert.Equal(6, tempQueue.Queue()[0]);
+            Assert.Equal(7, tempQueue.Queue()[1]);
+            Assert.Equal(4, tempQueue.Queue()[2]);
         }
 
         [Fact]
@@ -67,5 +54,44 @@ namespace TestSuite
         {
             Assert.Throws<ArgumentNullException>(() => circleQueue.Insert(null));
         }
+
+        [Fact]
+        public void RemoveValueShouldDeleteOldestItem()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                circleQueue.Insert(i * 2);
+            }
+
+            circleQueue.Remove();
+
+            int[] expectedValues = { 10, 4, 6, 8 };
+
+            for (int i = 0; i < expectedValues.Length; i++)
+            {
+                Assert.Equal(expectedValues[i], circleQueue.Queue()[i]);
+            }
+            
+        }
+
+        [Fact]
+        public void MovedListShouldReturnItemsInOrder()
+        {
+            int[] expectedValues = {10, 12, 14};
+
+            for (int i = 0; i < 8; i++)
+            {
+                circleQueue.Insert(i * 2);
+            }
+
+            circleQueue.Remove();
+            circleQueue.Remove();
+
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.Equal(expectedValues[i], circleQueue.Queue()[i]);
+            }
+        }
+
     }
 }
