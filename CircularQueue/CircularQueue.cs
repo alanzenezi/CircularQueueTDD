@@ -4,6 +4,7 @@
     {
         private int?[] items;
         private int writePtr, readPtr;
+        private bool movReadPtr;
 
         private int movPtrNext(int ptr)
         {
@@ -25,6 +26,7 @@
             items = new int?[size];
             writePtr = 0;
             readPtr = 0;
+            movReadPtr = false;
         }
 
         public void Insert(int? value)
@@ -39,12 +41,17 @@
                     }
                 })();
 
+                if (movReadPtr)
+                {
+                    readPtr = movPtrNext(readPtr);
+                }
+
                 items[writePtr] = value;
                 writePtr = movPtrNext(writePtr);
                 
                 if (writePtr == readPtr)
                 {
-                    readPtr = movPtrNext(readPtr);
+                    movReadPtr = true;
                 }
             }
             catch (ArgumentNullException ex)
@@ -75,6 +82,7 @@
 
                 items[readPtr] = null;
                 readPtr = movPtrNext(readPtr);
+                movReadPtr = false;
             }
             catch (InvalidOperationException ex)
             {
@@ -105,12 +113,13 @@
             {
                 new Action(() =>
                 {
-                    for (int i = 0; i < size; i++, movPtrNext(readerPtr))
+                    for (int i = 0; i < size; i++)
                     {
                         if (items != null)
                         {
                             convertedOutputQueue[i] = items[readerPtr] ??
                                 throw new InvalidOperationException("Demonic fatal error happened to the queue");
+                            readerPtr = movPtrNext(readerPtr);
                         }
                     }
 

@@ -65,7 +65,7 @@ namespace TestSuite
 
             circleQueue.Remove();
 
-            int[] expectedValues = { 10, 4, 6, 8 };
+            int[] expectedValues = { 4, 6, 8, 10 };
 
             for (int i = 0; i < expectedValues.Length; i++)
             {
