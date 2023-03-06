@@ -1,17 +1,19 @@
-﻿namespace CircularQueue
+﻿namespace CircularBuffer
 {
-    public class CircularQueue<T>
+    public class CircularQueue
     {
-        public T?[] items;
-        private int writePtr;
+        private int?[] items;
+        private int writePtr, readPtr;
+        private bool movReadPtr;
 
-        private void movWritePtrNext()
+        private int movPtrNext(int ptr)
         {
-            ++writePtr;
-            if (writePtr == items.Length)
+            ptr++;
+            if (ptr == items.Length)
             {
-                writePtr = 0;
+                return ptr = 0;
             }
+            return ptr;
         }
 
         public int Length()
@@ -21,21 +23,36 @@
 
         public CircularQueue(int size)
         {
-            items = new T?[size];
+            items = new int?[size];
             writePtr = 0;
+            readPtr = 0;
+            movReadPtr = false;
         }
 
-        public void Insert(T? value)
+        public void Insert(int? value)
         {
             try
             {
-                if (value == null)
+                new Action(() =>
                 {
-                    throw new ArgumentNullException("Cannot insert null item");
+                    if (value == null)
+                    {
+                        throw new ArgumentNullException("Cannot insert null item");
+                    }
+                })();
+
+                if (movReadPtr)
+                {
+                    readPtr = movPtrNext(readPtr);
                 }
 
                 items[writePtr] = value;
-                movWritePtrNext();
+                writePtr = movPtrNext(writePtr);
+                
+                if (writePtr == readPtr)
+                {
+                    movReadPtr = true;
+                }
             }
             catch (ArgumentNullException ex)
             {
@@ -63,21 +80,9 @@
                     }
                 })();
 
-                new Action(() =>
-                {
-                    var queueMinusOldestItem = new T?[items.Length];
-
-                    for (int i = 1; i < items.Length; i++)
-                    {
-                        queueMinusOldestItem[i - 1] = items[i];
-                        if (i == items.Length - 1)
-                        {
-                            queueMinusOldestItem[i] = default(T);
-                        }
-                    }
-
-                    items = queueMinusOldestItem;
-                })();
+                items[readPtr] = null;
+                readPtr = movPtrNext(readPtr);
+                movReadPtr = false;
             }
             catch (InvalidOperationException ex)
             {
@@ -85,37 +90,39 @@
             }
         }
 
-        public T[] Queue()
+        public int[] Queue()
         {
-            T[] convertedOutputQueue;
+            int[] convertedOutputQueue;
             int size = 0;
+            int readerPtr = readPtr;
 
             new Action(() =>
             {
-                foreach (var item in items)
+                for (int i = 0; i < items.Length; i++)
                 {
-                    if (item != null)
+                    if (items[i] != null)
                     {
                         size++;
                     }
                 }
             })();
 
-            convertedOutputQueue = new T[size];
+            convertedOutputQueue = new int[size];
+
             try
             {
                 new Action(() =>
                 {
-                    int j = 0;
-                    for (int i = 0; i < convertedOutputQueue.Length; i++)
+                    for (int i = 0; i < size; i++)
                     {
                         if (items != null)
                         {
-                            convertedOutputQueue[j] = items[i] ??
+                            convertedOutputQueue[i] = items[readerPtr] ??
                                 throw new InvalidOperationException("Demonic fatal error happened to the queue");
-                            j++;
+                            readerPtr = movPtrNext(readerPtr);
                         }
                     }
+
                 })();
             }
             catch (InvalidOperationException ex)
